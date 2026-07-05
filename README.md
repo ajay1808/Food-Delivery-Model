@@ -72,7 +72,7 @@ CatBoost over XGBoost, for two reasons:
 
 Validation split (80/20), compared against a tuned XGBoost baseline on the same dataset:
 
-| Metric | Baseline (XGBoost) | This pipeline (CatBoost) |
+| Metric | XGBoost | CatBoost + Network |
 |---|---|---|
 | MAE | 3.14 min | ~2.91 min |
 | RMSE | 3.93 min | ~3.75 min |
