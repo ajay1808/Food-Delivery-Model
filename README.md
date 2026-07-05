@@ -72,9 +72,9 @@ CatBoost over XGBoost, for two reasons:
 
 ## Results
 
-Validation split (80/20), compared against a tuned XGBoost baseline on the same dataset. Numbers below are reproduced directly by running `eta_pipeline.py` in this repo:
+The CatBoost + Network numbers are reproduced directly by running `eta_pipeline.py` in this repo (validation split, 80/20). The XGBoost column is the reported score of the top-voted Kaggle kernel for this dataset, cited as-is for context — it was not re-run under the same split/seed in this repo, so treat it as a reference point rather than a controlled comparison.
 
-| Metric | XGBoost | CatBoost + Network |
+| Metric | XGBoost (top-voted kernel) | CatBoost + Network (this repo) |
 |---|---|---|
 | MAE | 3.14 min | 3.04 min |
 | RMSE | 3.93 min | 3.80 min |
