@@ -4,7 +4,7 @@ ML pipeline for predicting food delivery ETA. Instead of treating the problem as
 
 ## The Dataset
 
-[Food Delivery Dataset](https://www.kaggle.com/datasets) from Kaggle — ~45,000 delivery records across multiple cities.
+[Food Delivery Dataset](https://www.kaggle.com/datasets/gauravmalik26/food-delivery-dataset/) by Gaurav Malik, via Kaggle — ~45,000 delivery records across multiple cities. `archive.zip` in this repo is the unmodified download from that dataset page (`train.csv`, `test.csv`, `Sample_Submission.csv`); see the Kaggle page for its license terms.
 
 **Raw data columns:**
 
@@ -82,10 +82,11 @@ Validation split (80/20), compared against a tuned XGBoost baseline on the same 
 
 ```bash
 pip install pandas numpy h3 scikit-learn catboost
+unzip archive.zip
 python eta_pipeline.py
 ```
 
-Place `train.csv` and `test.csv` in the same directory as the script (or unzip the Kaggle `archive.zip`). The pipeline:
+`archive.zip` is included in this repo; unzipping it produces `train.csv` and `test.csv` in the working directory, which is where the script expects them. `ETA_Prediction_Storytelling.ipynb` runs the same steps and includes an `!unzip archive.zip` cell at the top. The pipeline:
 
 1. Cleans and feature-engineers the raw data (`process_data`)
 2. Builds the H3 spatial graph and imputes cold-start edges (`build_spatial_graph`)
