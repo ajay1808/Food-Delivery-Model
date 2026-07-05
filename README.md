@@ -97,4 +97,33 @@ python eta_pipeline.py
 
 ## Future Work (v2.0)
 
-- Multi-agent negotiation: a LangGraph/CrewAI setup where dispatcher agents (car vs. micro-mobility) negotiate routes in real time based on the ETAs from this model, to simulate fleet response to localized traffic shocks.
+V1 predicts ETA for a fixed route and a fixed price. V2 extends this into a simulation: detect when conditions deviate from what the model expects, reroute and reprice around the disruption, and negotiate the final delivery fee between two agents instead of hard-coding it.
+
+### 1. Anomaly detection
+
+- Simulate a stream of incoming orders, then inject a localized disruption (e.g. a blocked route inside a specific H3 cell).
+- For each order, compare the V1 model's predicted ETA against a simulated actual delivery time. Track the residual (`actual − predicted`).
+- Maintain a rolling interquartile range (IQR) of residuals. If orders in the same H3 cell start showing residuals greater than 1.5× IQR, flag that cell as anomalous.
+
+### 2. Rerouting and pricing
+
+- Once a cell is flagged, recompute the route to avoid it — this increases `Edge_Distance_km` for orders passing through that area.
+- Compute a base fare from a fixed formula, e.g. `$2.00 + $0.50 × distance + $0.10 × predicted time`.
+- Apply a surge multiplier (1.5x–2.5x) on top of the base fare to set a maximum budget for that delivery, rather than charging the multiplier directly.
+
+### 3. Negotiation between two agents
+
+- Instead of the price being fixed at the surge-adjusted number, two LLM agents (LangGraph or CrewAI) negotiate the final price within that budget.
+- Dispatcher agent (the platform): can check the surge budget through a tool, and opens with a low offer to protect margin.
+- Driver agent (the worker): can evaluate route profitability through a tool (detour distance, traffic, offered price), and counters with a reasoned rejection if the offer doesn't cover the added distance/time.
+- The two exchange offers and counter-offers until they agree or hit a negotiation ceiling. The final agreed price is logged along with the reasoning that produced it.
+
+### 4. Measuring negotiating power
+
+For every simulated negotiation, quantify which side held more leverage rather than describing it qualitatively:
+
+- Let `dispatcher_offer` be the dispatcher's opening offer, `driver_ask` be the driver's opening ask, and `final_price` be the agreed price.
+- `driver_concession = (driver_ask − final_price) / (driver_ask − dispatcher_offer)`
+- `dispatcher_concession = (final_price − dispatcher_offer) / (driver_ask − dispatcher_offer)`
+- Whichever side conceded less (the smaller ratio) held more leverage in that negotiation.
+- Aggregate this ratio across many simulated disruptions, broken out by conditions (surge multiplier, reroute distance, anomaly severity), to see when leverage shifts from the platform to the driver and under what circumstances.
