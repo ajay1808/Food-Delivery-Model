@@ -185,14 +185,14 @@ def run_pipeline(train_path, test_path, output_path='submission.csv'):
     train, test = build_spatial_graph(df, h3_resolution=8)
 
     num_features = [
-        'Delivery_person_Age', 'Edge_Distance_km', 'Edge_Distance_Manhattan_km',
+        'Delivery_person_Age', 'Delivery_person_Ratings', 'Edge_Distance_km', 'Edge_Distance_Manhattan_km',
         'Effective_Distance', 'Historical_Edge_Time', 'Prep_Time_min',
         'Hour_Sin', 'Hour_Cos', 'Vehicle_condition', 'multiple_deliveries'
     ]
 
     cat_features = [
         'Weatherconditions', 'Road_traffic_density', 'Type_of_order', 'Type_of_vehicle',
-        'Festival', 'City', 'Ratings_Category', 'Driver_Speed_Profile', 'Time_Bucket_168'
+        'Festival', 'City', 'Ratings_Category', 'Driver_Speed_Profile', 'Time_Bucket_168', 'Day_of_Week'
     ]
 
     log_step("Preparing categorical columns for CatBoost...")
@@ -214,9 +214,9 @@ def run_pipeline(train_path, test_path, output_path='submission.csv'):
     t_val = time.time()
 
     model = CatBoostRegressor(
-        iterations=1000,
-        learning_rate=0.08,
-        depth=6,
+        iterations=3000,
+        learning_rate=0.04,
+        depth=8,
         l2_leaf_reg=3,
         loss_function='RMSE',
         eval_metric='R2',

@@ -56,10 +56,12 @@ Concretely, in `build_spatial_graph`:
 
 - `Hour_Sin` / `Hour_Cos`: cyclical encoding of order hour, so hour 23 and hour 0 are adjacent instead of maximally far apart.
 - `Time_Bucket_168`: day-of-week × hour bucket (e.g. `Friday_19`) to capture weekly demand patterns like the Friday dinner rush.
+- `Day_of_Week` is also passed on its own, in addition to `Time_Bucket_168`, so the model can learn coarser weekday effects even where a specific day-hour bucket is sparse.
 
 ### Driver profiling
 
 - `Driver_Speed_Profile`: using train-only per-driver average delivery time, drivers below the 5th percentile or above the 95th are tagged `Fast_Outlier` / `Slow_Outlier`, otherwise `Normal`.
+- `Delivery_person_Ratings` is passed to the model directly as a numeric feature, in addition to the `Ratings_Category` quartile bucket. It's the single strongest raw correlate of delivery time in this dataset (r ≈ -0.34) — stronger than trip distance — and the quartile bucket alone discards most of that signal.
 
 ## Model
 
@@ -70,13 +72,13 @@ CatBoost over XGBoost, for two reasons:
 
 ## Results
 
-Validation split (80/20), compared against a tuned XGBoost baseline on the same dataset:
+Validation split (80/20), compared against a tuned XGBoost baseline on the same dataset. Numbers below are reproduced directly by running `eta_pipeline.py` in this repo:
 
 | Metric | XGBoost | CatBoost + Network |
 |---|---|---|
-| MAE | 3.14 min | ~2.91 min |
-| RMSE | 3.93 min | ~3.75 min |
-| R² | 0.820 | 0.835 – 0.842 |
+| MAE | 3.14 min | 3.04 min |
+| RMSE | 3.93 min | 3.80 min |
+| R² | 0.820 | 0.8355 |
 
 ## Usage
 
