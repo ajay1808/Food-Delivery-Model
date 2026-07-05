@@ -34,8 +34,23 @@ Straight-line distance doesn't reflect how cars move through a city grid.
 
 - `Edge_Distance_Manhattan_km`: L1-norm distance (with proper longitude scaling by `cos(lat)`), used as a closer approximation of city-grid driving than Haversine.
 - `Effective_Distance`: Manhattan distance multiplied by a `Road_traffic_density` multiplier, as an interaction term for route friction.
-- H3 hex grid (resolution 8): restaurant and delivery coordinates are mapped to discrete cells, forming an edge (`Rest_H3 -> Del_H3`) per delivery.
-- `Historical_Edge_Time`: mean historical delivery time per edge, computed on train only. Edges not seen in training are imputed via a KNN regressor (k=5, distance-weighted) over delivery coordinates.
+
+#### H3 hex grid
+
+Raw `(lat, lon)` pairs are a problem for this kind of aggregation: each delivery has its own unique coordinates, so there's no way to group deliveries by "location" and compute something like average delivery time for a neighborhood — every row is its own island.
+
+[H3](https://h3geo.org/) is a geospatial indexing system (originally built at Uber for ride/delivery dispatch) that solves this by tiling the earth's surface into a grid of hexagonal cells and giving each cell a unique ID string. Snapping a raw coordinate to its enclosing cell turns a continuous, effectively infinite coordinate space into a finite, reusable set of locations — many different deliveries that happen to land in the same neighborhood now map to the same cell ID, so they can be grouped and aggregated.
+
+Hexagons are used instead of a simple lat/lon grid of squares because every hexagon has 6 neighboring cells at equal distance from its center. A square grid doesn't have that property — a diagonal neighbor is farther away than an edge neighbor — which distorts any distance or adjacency calculation done on the grid itself.
+
+H3 also supports multiple resolutions (0 = coarsest, continent-sized cells, up to 15 = finest, sub-meter cells). This pipeline uses resolution 8, where each cell averages roughly 0.7 km² — small enough to distinguish neighborhoods within a city, large enough that the same cell gets reused across many orders.
+
+Concretely, in `build_spatial_graph`:
+
+- `Rest_H3` and `Del_H3` are the hex cell IDs for the restaurant and the drop-off point.
+- `Spatial_Edge` (`Rest_H3 -> Del_H3`) represents a directed route between two neighborhoods.
+- `Historical_Edge_Time` is the mean delivery time across all training orders that share that same edge — a learned prior for "how long a delivery from neighborhood A to neighborhood B usually takes," computed on train only to avoid leakage.
+- If a specific edge never appears in training (a route between two neighborhoods with no historical orders), there's nothing to look up. A KNN regressor (k=5, distance-weighted) over the raw delivery coordinates fills in an estimate from the nearest edges that do have historical data.
 
 ### Time features
 
